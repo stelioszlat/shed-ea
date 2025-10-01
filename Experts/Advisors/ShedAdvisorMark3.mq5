@@ -273,7 +273,7 @@ void checkBreakEvenConditions() {
    double stopLossDifference = 0.0;
    if (orderType == POSITION_TYPE_BUY) {
       stopLossDifference = entryPrice - stopLoss;
-      if (entryPrice + (breakEven * stopLossDifference) <= currentPrice && breakEvenRun) {
+      if (entryPrice + (breakEven * stopLossDifference) <= currentPrice && !breakEvenRun) {
          double TS = entryPrice + 0.01;                              // add one pip to the price
          Print("[BREAK_EVEN_BUY] Stop loss value:", TS);
          if (ModifyStopLoss(ticket, TS)) {
@@ -282,7 +282,7 @@ void checkBreakEvenConditions() {
       }
    } else if (orderType == POSITION_TYPE_SELL) {
       stopLossDifference = stopLoss - entryPrice;
-      if (entryPrice - (breakEven * stopLossDifference) >= currentPrice && breakEvenRun) {
+      if (entryPrice - (breakEven * stopLossDifference) >= currentPrice && !breakEvenRun) {
          double TS = entryPrice - 0.01;                              // add one pip to the price
          Print("[BREAK_EVEN_BUY] Stop loss value:", TS);
          if (ModifyStopLoss(ticket, TS)) {
