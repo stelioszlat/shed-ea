@@ -241,7 +241,7 @@ void checkTradeConditions() {
       Print("[BREAKOUT_BUY]");
       state = BREAKOUT_BUY;
    }
-
+   // TODO: when a candlestick closes slightly outside the channel, the breakout countdown starts from the next candlestick which is sometimes wrong
    if (currClose < lower && currOpen < prevOpen && prevOpen > prevClose) {
       Print("[BREAKOUT_SELL]");
       state = BREAKOUT_SELL;
@@ -326,6 +326,8 @@ void checkTrailingStopConditions() {
       }
    }
 }
+
+// TODO: Partial close by checking R conditions
 
 //--------------------------- EA-specific code ----------------------------//
 
