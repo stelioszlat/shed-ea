@@ -311,13 +311,13 @@ void checkTrailingStopConditions() {
    double stopLossDifference = 0.0;
    if (orderType == POSITION_TYPE_BUY) {
       stopLossDifference = entryPrice - stopLoss;
-      if ((entryPrice <= currClose + (0.6 * stopLossDifference)) && (entryPrice <= currLow + (0.3 * stopLossDifference))) {
+      if (entryPrice - 0.04 <= currLow) {
          Print("[TRAILING_STOP_BUY] Stop loss value:", currLow - 0.02);
          ModifyStopLoss(ticket, currLow - 0.02);
       }   
    } else if (orderType == POSITION_TYPE_SELL) {
       stopLossDifference = stopLoss - entryPrice;
-      if ((entryPrice >= currClose - (0.6 * stopLossDifference)) && (entryPrice >= currHigh - (0.3 * stopLossDifference))) {
+      if (entryPrice + 0.04 >= currHigh) {
          Print("[TRAILING_STOP_SELL] Stop loss value:", currHigh + 0.02);
          ModifyStopLoss(ticket, currHigh + 0.02);
       }
