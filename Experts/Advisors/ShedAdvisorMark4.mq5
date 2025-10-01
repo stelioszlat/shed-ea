@@ -25,12 +25,11 @@ input string TradingSessionStart = "08:30";
 input string TradingSessionEnd   = "13:00";
 input int    lookback = 5;
 input int    TimerIntervalSeconds = 180;
-input double Margin = 0.0;
-input double Difference = 0.0;
 input double TakeProfit = 0.0;
 input double StopLoss = 0.0;
 input double TakeProfitMultiplier = 0.0;
-input double BreakEven = 0.0;
+input double BreakEvenPercent = 0.6;
+input double InitialStopLossMarginInPips = 0.0;
 
 datetime g_lastBarTime = 0; // For new candle detection
 
@@ -113,7 +112,7 @@ bool TriggerSellOrder(double channelWidth, double riskPercent=0.1, int magicNumb
    }
 
    double entryPrice = SymbolInfoDouble(_Symbol, SYMBOL_BID);
-   double SL = NormalizeDouble(entryPrice + channelWidth, _Digits);
+   double SL = NormalizeDouble(entryPrice + channelWidth, _Digits) + InitialStopLossMarginInPips;
    double takeProfitMultiplier = TakeProfitMultiplier != 0.0 ? TakeProfitMultiplier : 1.5;
    double TP = TakeProfit != 0.0 ? NormalizeDouble(TakeProfit * 1000, _Digits) : NormalizeDouble(entryPrice - channelWidth * takeProfitMultiplier, _Digits);
 
@@ -149,7 +148,7 @@ bool TriggerBuyOrder(double channelWidth, double riskPercent=0.1, int magicNumbe
    }
 
    double entryPrice = SymbolInfoDouble(_Symbol, SYMBOL_ASK);
-   double SL = NormalizeDouble(entryPrice - channelWidth, _Digits);
+   double SL = NormalizeDouble(entryPrice - channelWidth, _Digits) - InitialStopLossMarginInPips;
    double takeProfitMultiplier = TakeProfitMultiplier != 0.0 ? TakeProfitMultiplier : 1.5;
    double TP = TakeProfit != 0.0 ? NormalizeDouble(TakeProfit * 1000, _Digits) : NormalizeDouble(entryPrice + channelWidth * takeProfitMultiplier, _Digits);
 
@@ -214,13 +213,15 @@ bool ModifyStopLoss(ulong ticket, double TS) {
 void checkTradeConditions() {
    ENUM_TIMEFRAMES timeframe = _Period;
    
+   if (!IsNewBar()) {
+      return;
+   }
+   
    double central, upper, lower, central20, upper20, lower20;
    GetAdaptiveATRChannelByIndex(adaptiveATRHandle, 112, 0, central, upper, lower);
    GetAdaptiveATRChannelByIndex(adaptiveATRHandle, 20, 0,  central20, upper20, lower20);
    
    double channelWidth = upper - lower; // NOTE: This is in price units.
-   margin = Margin;
-   diff   = Difference;
 
    double currClose = iClose(_Symbol, timeframe, 0);
    double currOpen  = iOpen(_Symbol, timeframe, 0);
@@ -265,7 +266,7 @@ void checkBreakEvenConditions() {
    }
    
    double entryPrice = PositionSelectByTicket(ticket) ? PositionGetDouble(POSITION_PRICE_OPEN) : 0.0;
-   double breakEven = BreakEven != 0.0 ? BreakEven : 0.6;
+   double breakEven = BreakEvenPercent;
    
    double stopLoss = gInitialSL;
    ENUM_POSITION_TYPE orderType = (ENUM_POSITION_TYPE)PositionGetInteger(POSITION_TYPE);
