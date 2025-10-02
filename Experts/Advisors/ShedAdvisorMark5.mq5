@@ -56,12 +56,16 @@ double CalculateLotSize(double channelWidthPriceUnits, double riskPercent=1.0) {
    double tickValue = SymbolInfoDouble(_Symbol, SYMBOL_TRADE_TICK_VALUE);
    double volumeStep = SymbolInfoDouble(_Symbol, SYMBOL_VOLUME_STEP);
 
-   if (channelWidthPriceUnits <= point || point <= 0 || tickValue <= 0 || volumeStep <= 0 || riskMoney <= 0) {
+   long spread = SymbolInfoInteger(_Symbol, SYMBOL_SPREAD);
+   double spreadInPrice = spread * point;
+   double adjustedChannelWidth = channelWidthPriceUnits + spreadInPrice;
+
+   if (adjustedChannelWidth <= point || point <= 0 || tickValue <= 0 || volumeStep <= 0 || riskMoney <= 0) {
       Print("[ERROR]: CalculateLotSize Invalid inputs");
       return 0.0;
    }
-
-   double stopLossPoints = MathRound(channelWidthPriceUnits / point);
+  
+   double stopLossPoints = MathRound(adjustedChannelWidth / point);
    if (stopLossPoints <= 0) {
       Print("[ERROR]: CalculateLotSize Stop Loss less than 0");
       return 0.0;
@@ -107,12 +111,15 @@ double CalculateEfficiencyRatio(int period, int index, const double &closed[]) {
 }
 
 double CalculateInitialStopLossWidth(double channelWidth, double channel20Width) {
+   double point = SymbolInfoDouble(_Symbol, SYMBOL_POINT);
+   long spread = SymbolInfoInteger(_Symbol, SYMBOL_SPREAD);
+   double spreadInPrice = spread * point;
    double channel = channelWidth;
    if (channelWidth < channel20Width) {
       channel = channel20Width;
    }
    
-   return channel;
+   return channel + spreadInPrice;
 }
 
 bool TriggerSellOrder(double channelWidth, double channel20Width, double riskPercent=0.1, int magicNumber=12345) {
@@ -220,6 +227,34 @@ bool ModifyStopLoss(ulong ticket, double TS) {
    }
 }
 
+bool TriggerPartialCloseOrder(double lot) {
+   if(!PositionSelect(_Symbol)) {
+      Print("[PARTIAL_CLOSE_ERROR] No position for ", _Symbol);
+      return false;
+   }
+   
+   double current_lot = PositionGetDouble(POSITION_VOLUME);
+   
+   if(lot >= current_lot) {
+      Print("[ERROR] Cannot close ", lot, " >= ", current_lot);
+      return false;
+   }
+   
+   ulong ticket = PositionGetInteger(POSITION_TICKET);
+   
+   if (trade.PositionClosePartial(ticket, lot)) {
+      Print("[PARTIAL_CLOSE] at ", lot);
+      return true;
+   }
+   
+   Print("[ERROR] Partial close failed!");
+   Print("  Error Code: ", GetLastError());
+   Print("  RetCode: ", trade.ResultRetcode());
+   Print("  Description: ", trade.ResultRetcodeDescription());
+   
+   return false;
+}
+
 void checkTradeConditions() {
    ENUM_TIMEFRAMES timeframe = _Period;
    
@@ -241,11 +276,15 @@ void checkTradeConditions() {
    
 
    if (currClose > upper && central20 > upper && currOpen > prevOpen && prevOpen < prevClose && state == RETRACEMENT_BUY) {
-      TriggerBuyOrder(channelWidth, channel20Width);
+      if (!PositionSelect(_Symbol)) {
+         TriggerBuyOrder(channelWidth, channel20Width);
+      }
    }
 
    if (currClose < lower && central20 < lower && currOpen < prevOpen && prevOpen > prevClose && state == RETRACEMENT_SELL) {
-      TriggerSellOrder(channelWidth, channel20Width);
+      if (!PositionSelect(_Symbol)) {
+         TriggerSellOrder(channelWidth, channel20Width);
+      }
    }
 
    if (currClose > upper && currOpen > prevOpen && prevOpen < prevClose) {
@@ -313,23 +352,19 @@ void checkTrailingStopConditions() {
    }
    
    ulong ticket = PositionGetTicket(0);
-   double stopLoss = gInitialSL;
    double entryPrice = PositionSelectByTicket(ticket) ? PositionGetDouble(POSITION_PRICE_OPEN) : 0.0;
    double currClose = iClose(_Symbol, timeframe, 1);
    double currHigh = iHigh(_Symbol, timeframe, 1);
    double currLow = iLow(_Symbol, timeframe, 1);
    ENUM_POSITION_TYPE orderType = (ENUM_POSITION_TYPE)PositionGetInteger(POSITION_TYPE);
    
-   double stopLossDifference = 0.0;
    if (orderType == POSITION_TYPE_BUY) {
-      stopLossDifference = stopLoss - entryPrice;
       double TS = currLow - 0.02;
       if (TS > entryPrice && entryPrice - 0.04 <= currLow) {
          Print("[TRAILING_STOP_BUY] Stop loss value:", TS);
          ModifyStopLoss(ticket, TS);
       }   
    } else if (orderType == POSITION_TYPE_SELL) {
-      stopLossDifference = entryPrice - stopLoss;
       double TS = currHigh + 0.02;
       if (TS < entryPrice && entryPrice + 0.04 >= currHigh) {
          Print("[TRAILING_STOP_SELL] Stop loss value:", TS);
@@ -339,7 +374,26 @@ void checkTrailingStopConditions() {
 }
 
 void checkRConditions() {
+   double stopLoss = gInitialSL;
+   ulong ticket = PositionGetTicket(0);
+   double entryPrice = PositionSelectByTicket(ticket) ? PositionGetDouble(POSITION_PRICE_OPEN) : 0.0;
+   ENUM_POSITION_TYPE orderType = (ENUM_POSITION_TYPE)PositionGetInteger(POSITION_TYPE);
    
+   if (orderType == POSITION_TYPE_BUY) {
+      double stopLossDifference = entryPrice - stopLoss;
+      double currentPrice = SymbolInfoDouble(_Symbol, SYMBOL_ASK);
+      if (currentPrice >= stopLossDifference + entryPrice) {
+         double lot = NormalizeDouble(PositionGetDouble(POSITION_VOLUME) / 2.0, _Digits);
+         TriggerPartialCloseOrder(lot);
+      }
+   } else if (orderType == POSITION_TYPE_SELL) {
+      double stopLossDifference = stopLoss - entryPrice;
+      double currentPrice = SymbolInfoDouble(_Symbol, SYMBOL_BID);
+      if (currentPrice <= entryPrice - stopLossDifference) {
+         double lot = NormalizeDouble(PositionGetDouble(POSITION_VOLUME) / 2.0, _Digits);
+         TriggerPartialCloseOrder(lot);
+      }
+   }
 } 
 
 //--------------------------- EA-specific code ----------------------------//
@@ -392,15 +446,17 @@ void OnTick() {
    }
     
    if (PositionSelect(_Symbol)) {
+      checkRConditions();
       checkBreakEvenConditions();
       checkTrailingStopConditions();
+      checkTradeConditions();
       return;
    } else {
       gTicket = 0;
       gInitialSL = 0.0;
       breakEvenRun = false;
    }
-
+   
    checkTradeConditions();
 }
 
