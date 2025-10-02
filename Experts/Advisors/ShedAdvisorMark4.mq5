@@ -1,5 +1,5 @@
 //+------------------------------------------------------------------+
-//|                                             ShedAdvisorMark3.mq5 |
+//|                                             ShedAdvisorMark4.mq5 |
 //|                                                     Stelios Zlat |
 //|                                             https://www.mql5.com |
 //+------------------------------------------------------------------+
@@ -23,6 +23,7 @@ input ENUM_APPLIED_PRICE AppliedPrice = PRICE_CLOSE; // Price type for indicator
 input double pip = 0.01;                // pip size
 input string TradingSessionStart = "08:30";
 input string TradingSessionEnd   = "13:00";
+// TODO: allow multiple trading sessions in one day (e.g. 08:00 - 13:00 15:00 - 16:00)
 input int    lookback = 5;
 input int    TimerIntervalSeconds = 180;
 input double TakeProfit = 0.0;
