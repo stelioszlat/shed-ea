@@ -36,6 +36,7 @@ datetime g_lastBarTime = 0; // For new candle detection
 
 int adaptiveATRHandle;
 bool breakEvenRun = false;
+bool partialCloseRun = false;
 
 enum TradeState {
    TRADE_IDLE,
@@ -234,7 +235,6 @@ bool TriggerPartialCloseOrder(double lot) {
    }
    
    double current_lot = PositionGetDouble(POSITION_VOLUME);
-   Print("[PARTIAL_CLOSE] Current lot: ", current_lot, " Closing: ", lot);
    
    if(lot >= current_lot) {
       Print("[ERROR] Cannot close ", lot, " >= ", current_lot);
@@ -245,6 +245,7 @@ bool TriggerPartialCloseOrder(double lot) {
    
    if (trade.PositionClosePartial(ticket, lot)) {
       Print("[PARTIAL_CLOSE] at ", lot);
+      partialCloseRun = true;
       return true;
    }
    
@@ -258,6 +259,10 @@ bool TriggerPartialCloseOrder(double lot) {
 
 void checkTradeConditions() {
    ENUM_TIMEFRAMES timeframe = _Period;
+   
+   if (!IsNewBar()) {
+      return;
+   }
    
    double central, upper, lower, central20, upper20, lower20;
    GetAdaptiveATRChannelByIndex(adaptiveATRHandle, 112, 0, central, upper, lower);
@@ -273,14 +278,16 @@ void checkTradeConditions() {
    
 
    if (currClose > upper && central20 > upper && currOpen > prevOpen && prevOpen < prevClose && state == RETRACEMENT_BUY) {
-      if (!PositionSelect(_Symbol) && IsNewBar()) {
+      if (!PositionSelect(_Symbol)) {
          TriggerBuyOrder(channelWidth, channel20Width);
+         partialCloseRun = false;
       }
    }
 
    if (currClose < lower && central20 < lower && currOpen < prevOpen && prevOpen > prevClose && state == RETRACEMENT_SELL) {
-      if (!PositionSelect(_Symbol) && IsNewBar()) {
+      if (!PositionSelect(_Symbol)) {
          TriggerSellOrder(channelWidth, channel20Width);
+         partialCloseRun = false;
       }
    }
 
@@ -380,14 +387,14 @@ void checkRConditions() {
       double stopLossDifference = entryPrice - stopLoss;
       double currentPrice = SymbolInfoDouble(_Symbol, SYMBOL_ASK);
       if (currentPrice >= stopLossDifference + entryPrice) {
-         double lot = NormalizeDouble(PositionGetDouble(POSITION_VOLUME) / 2.0, _Digits);
+         double lot = NormalizeDouble(PositionGetDouble(POSITION_VOLUME) / 2.0, 2);
          TriggerPartialCloseOrder(lot);
       }
    } else if (orderType == POSITION_TYPE_SELL) {
       double stopLossDifference = stopLoss - entryPrice;
       double currentPrice = SymbolInfoDouble(_Symbol, SYMBOL_BID);
       if (currentPrice <= entryPrice - stopLossDifference) {
-         double lot = NormalizeDouble(PositionGetDouble(POSITION_VOLUME) / 2.0, _Digits);
+         double lot = NormalizeDouble(PositionGetDouble(POSITION_VOLUME) / 2.0, 2);
          TriggerPartialCloseOrder(lot);
       }
    }
@@ -443,7 +450,9 @@ void OnTick() {
    }
     
    if (PositionSelect(_Symbol)) {
-      checkRConditions();
+      if (!partialCloseRun) {
+         checkRConditions();
+      }
       checkBreakEvenConditions();
       checkTrailingStopConditions();
       checkTradeConditions();
