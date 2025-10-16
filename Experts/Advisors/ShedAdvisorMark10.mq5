@@ -1,5 +1,5 @@
 //+------------------------------------------------------------------+
-//|                                             ShedAdvisorMark10.mq5|
+//|                                             ShedAdvisorMark11.mq5|
 //|                                                     Stelios Zlat |
 //|                                             https://www.mql5.com |
 //+------------------------------------------------------------------+
@@ -300,7 +300,7 @@ void checkTradeConditions() {
       double retracementPercent = 100 - retracementSwing / breakoutSwing * 100;        // this watches the retracement with 0% at the bottom of the breakout and the 100% at the top
       Print("RETRACEMENT PERCENT ", retracementPercent, " %");
       
-      double orderPlacementToRetracement = (currClose - retracementBuyLow) / retracementSwing * 100;      
+      double orderPlacementToRetracement = (retracementBuyHigh - currClose) / retracementSwing * 100;      
       Print("ORDER PLACEMENT TO RETRACEMENT ", orderPlacementToRetracement, " %");
       if (!PositionSelect(_Symbol) && retracementPercent <= RetracementSwingPercent && orderPlacementToRetracement < OrderCloseToRetracementPercent) {
          TriggerBuyOrder(channelWidth, channel20Width);
@@ -639,9 +639,9 @@ void OnTick() {
    }
     
    if (PositionSelect(_Symbol)) {
-      /*if (!partialCloseRun) {
+      if (!partialCloseRun) {
          checkRConditions();
-      }*/
+      }
       checkBreakEvenConditions();
       checkTrailingStopConditions();
       checkTradeConditions();
