@@ -300,7 +300,7 @@ void checkTradeConditions() {
       double retracementPercent = 100 - retracementSwing / breakoutSwing * 100;        // this watches the retracement with 0% at the bottom of the breakout and the 100% at the top
       Print("RETRACEMENT PERCENT ", retracementPercent, " %");
       
-      double orderPlacementToRetracement = (retracementHigh - currClose) / retracementSwing * 100;      
+      double orderPlacementToRetracement = (currClose - retracementBuyLow) / retracementSwing * 100;      
       Print("ORDER PLACEMENT TO RETRACEMENT ", orderPlacementToRetracement, " %");
       if (!PositionSelect(_Symbol) && retracementPercent <= RetracementSwingPercent && orderPlacementToRetracement < OrderCloseToRetracementPercent) {
          TriggerBuyOrder(channelWidth, channel20Width);
