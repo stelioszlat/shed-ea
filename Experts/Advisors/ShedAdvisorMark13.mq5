@@ -1,5 +1,5 @@
 //+------------------------------------------------------------------+
-//|                                             ShedAdvisorMark12.mq5|
+//|                                             ShedAdvisorMark13.mq5|
 //|                                                     Stelios Zlat |
 //|                                             https://www.mql5.com |
 //+------------------------------------------------------------------+
@@ -344,7 +344,7 @@ void checkTradeConditions() {
    }
 
    // This triggers a possible sell order and checks for retracement
-   if (currClose < lower && central20 < lower && currOpen < prevOpen && prevOpen > prevClose) {
+   if (currClose < lower && central20 < lower && currOpen < prevOpen && prevOpen > prevClose && lastPrevOpen < lastPrevClose)  {
       Print("BREAKOUT_SELL POSSIBLE ORDER");
       findRetracementSellSwing();
       double retracementSwing = retracementSellHigh - retracementSellLow;
@@ -358,7 +358,7 @@ void checkTradeConditions() {
       
       double orderPlacementToRetracement = 100 - (currClose - retracementSellLow) / retracementSwing * 100; // this watces the order close with 0% at the bottom and the 100% at the top (the retracement low)      
       Print("ORDER PLACEMENT TO RETRACEMENT ", orderPlacementToRetracement, " %");
-      if (!PositionSelect(_Symbol) && retracementPercent >= BreakoutRetracementLow && retracementPercent <= BreakoutRetracementHigh && orderPlacementToRetracement < OrderCloseToRetracementPercent) {
+      if (!PositionSelect(_Symbol) && retracementPercent >= BreakoutRetracementLow && retracementPercent <= BreakoutRetracementHigh && orderPlacementToRetracement > OrderCloseToRetracementPercent) {
          TriggerSellOrder(channelWidth, channel20Width);
          partialCloseRun = false;
       }
@@ -503,7 +503,7 @@ void findRetracementSellSwing() {
    previousHigh = iHigh(_Symbol, _Period, index + 1);
    previousOpen = iOpen(_Symbol, _Period, index + 1);
    previousClose = iClose(_Symbol, _Period, index + 1);
-   while (previousOpen < previousClose) {
+   while (previousOpen > previousClose) {
       if (previousLow < breakoutSellLow) {
          //Print("LOW ", previousLow, " lower than ",  currentLow);
          breakoutSellLow = previousLow;
