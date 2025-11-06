@@ -1073,11 +1073,6 @@ int OnInit() {
         Print("[ERROR] MaxTotalOpenOrders must be between 1 and 20. Got: ", MaxTotalOpenOrders);
         return(INIT_PARAMETERS_INCORRECT);
     }
-    
-    if (MaxTotalOpenOrders > MaxTotalOpenOrders) {
-        Print("[WARN] MaxTotalOpenOrders (", MaxTotalOpenOrders, ") exceeds MaxTotalOpenOrders (", MaxTotalOpenOrders, "). Adjusting...");
-        MaxTotalOpenOrders = MaxTotalOpenOrders;
-    }
    
    return(INIT_SUCCEEDED);
 }
