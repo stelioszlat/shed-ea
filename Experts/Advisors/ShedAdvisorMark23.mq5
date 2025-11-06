@@ -442,11 +442,11 @@ Print("[DEBUG checkTradeConditions] Checking conditions (IsNewBar disabled for t
    double lastPrevClose = iClose(_Symbol, timeframe,2);
    double point = SymbolInfoDouble(_Symbol, SYMBOL_POINT);
    
-   Print("[DEBUG BUY] currClose(" + DoubleToString(currClose, _Digits) + ") > upper(" + DoubleToString(upper, _Digits) + ") = " + (currClose > upper));
-Print("[DEBUG BUY] central20(" + DoubleToString(central20, _Digits) + ") > upper(" + DoubleToString(upper, _Digits) + ") = " + (central20 > upper));
-Print("[DEBUG BUY] currOpen(" + DoubleToString(currOpen, _Digits) + ") > prevOpen(" + DoubleToString(prevOpen, _Digits) + ") = " + (currOpen > prevOpen));
-Print("[DEBUG BUY] prevOpen(" + DoubleToString(prevOpen, _Digits) + ") < prevClose(" + DoubleToString(prevClose, _Digits) + ") = " + (prevOpen < prevClose));
-Print("[DEBUG BUY] lastPrevOpen(" + DoubleToString(lastPrevOpen, _Digits) + ") > lastPrevClose(" + DoubleToString(lastPrevClose, _Digits) + ") = " + (lastPrevOpen > lastPrevClose));
+   Print("[DEBUG SELL] currClose(" + DoubleToString(currClose, _Digits) + ") < lower(" + DoubleToString(lower, _Digits) + ") = " + (currClose < lower ? "true" : "false"));
+   Print("[DEBUG SELL] central20(" + DoubleToString(central20, _Digits) + ") < lower(" + DoubleToString(lower, _Digits) + ") = " + (central20 < lower ? "true" : "false"));
+   Print("[DEBUG SELL] currOpen(" + DoubleToString(currOpen, _Digits) + ") < prevOpen(" + DoubleToString(prevOpen, _Digits) + ") = " + (currOpen < prevOpen ? "true" : "false"));
+   Print("[DEBUG SELL] prevOpen(" + DoubleToString(prevOpen, _Digits) + ") > prevClose(" + DoubleToString(prevClose, _Digits) + ") = " + (prevOpen > prevClose ? "true" : "false"));
+   Print("[DEBUG SELL] lastPrevOpen(" + DoubleToString(lastPrevOpen, _Digits) + ") < lastPrevClose(" + DoubleToString(lastPrevClose, _Digits) + ") = " + (lastPrevOpen < lastPrevClose ? "true" : "false"));
    
    /*if ((prevClose - prevOpen) < point * 10) {
       return;
@@ -491,11 +491,12 @@ Print("[DEBUG BUY] lastPrevOpen(" + DoubleToString(lastPrevOpen, _Digits) + ") >
    }
 
    // This triggers a possible sell order and checks for retracement
-   Print("[DEBUG SELL] currClose(" + DoubleToString(currClose, _Digits) + ") < lower(" + DoubleToString(lower, _Digits) + ") = " + (currClose < lower));
-Print("[DEBUG SELL] central20(" + DoubleToString(central20, _Digits) + ") < lower(" + DoubleToString(lower, _Digits) + ") = " + (central20 < lower));
-Print("[DEBUG SELL] currOpen(" + DoubleToString(currOpen, _Digits) + ") < prevOpen(" + DoubleToString(prevOpen, _Digits) + ") = " + (currOpen < prevOpen));
-Print("[DEBUG SELL] prevOpen(" + DoubleToString(prevOpen, _Digits) + ") > prevClose(" + DoubleToString(prevClose, _Digits) + ") = " + (prevOpen > prevClose));
-Print("[DEBUG SELL] lastPrevOpen(" + DoubleToString(lastPrevOpen, _Digits) + ") < lastPrevClose(" + DoubleToString(lastPrevClose, _Digits) + ") = " + (lastPrevOpen < lastPrevClose));
+   Print("[DEBUG SELL] currClose(" + DoubleToString(currClose, _Digits) + ") < lower(" + DoubleToString(lower, _Digits) + ") = " + (currClose < lower ? "true" : "false"));
+   Print("[DEBUG SELL] central20(" + DoubleToString(central20, _Digits) + ") < lower(" + DoubleToString(lower, _Digits) + ") = " + (central20 < lower ? "true" : "false"));
+   Print("[DEBUG SELL] currOpen(" + DoubleToString(currOpen, _Digits) + ") < prevOpen(" + DoubleToString(prevOpen, _Digits) + ") = " + (currOpen < prevOpen ? "true" : "false"));
+   Print("[DEBUG SELL] prevOpen(" + DoubleToString(prevOpen, _Digits) + ") > prevClose(" + DoubleToString(prevClose, _Digits) + ") = " + (prevOpen > prevClose ? "true" : "false"));
+   Print("[DEBUG SELL] lastPrevOpen(" + DoubleToString(lastPrevOpen, _Digits) + ") < lastPrevClose(" + DoubleToString(lastPrevClose, _Digits) + ") = " + (lastPrevOpen < lastPrevClose ? "true" : "false"));
+   
    if (currClose < lower && central20 < lower && currOpen < prevOpen && prevOpen > prevClose && lastPrevOpen < lastPrevClose)  {
       Print("BREAKOUT_SELL POSSIBLE ORDER");
       findRetracementSellSwing();
