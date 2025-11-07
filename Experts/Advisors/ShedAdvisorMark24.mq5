@@ -108,6 +108,7 @@ datetime g_lastResetDate = 0;
 double g_dailyStartBalance = 0.0;
 bool g_dailyLimitReached = false;
 datetime g_lastBarTime = 0; // For new candle detection
+datetime g_lastOffSessionProcessedDate = 0;
 
 int adaptiveATRHandle112;
 int adaptiveATRHandle20;
@@ -253,11 +254,11 @@ bool TriggerSellOrder(double channelWidth, double channel20Width, double riskPer
    // Apply lot multiplier based on order sequence
    if (g_orderCount > 0) {
       if (g_scalingDirection == 1) {  // Scaling into winners
-         if (g_orderCount == 1) volume = baseVolume * WinnerOrder2LotMultiplier;
-         else if (g_orderCount == 2) volume = baseVolume * WinnerOrder3LotMultiplier;
+         if (g_orderCount == 1) volume = NormalizeDouble(baseVolume * WinnerOrder2LotMultiplier, _Digits);
+         else if (g_orderCount == 2) volume = NormalizeDouble(baseVolume * WinnerOrder3LotMultiplier, _Digits);
       } else if (g_scalingDirection == -1) {  // Scaling into losers
-         if (g_orderCount == 1) volume = baseVolume * LoserOrder2LotMultiplier;
-         else if (g_orderCount == 2) volume = baseVolume * LoserOrder3LotMultiplier;
+         if (g_orderCount == 1) volume = NormalizeDouble(baseVolume * LoserOrder2LotMultiplier, _Digits);
+         else if (g_orderCount == 2) volume = NormalizeDouble(baseVolume * LoserOrder3LotMultiplier, _Digits);
       }
    }
 
@@ -314,11 +315,11 @@ bool TriggerBuyOrder(double channelWidth, double channel20Width, double riskPerc
    // Apply lot multiplier based on order sequence
    if (g_orderCount > 0) {
       if (g_scalingDirection == 1) {  // Scaling into winners
-         if (g_orderCount == 1) volume = baseVolume * WinnerOrder2LotMultiplier;
-         else if (g_orderCount == 2) volume = baseVolume * WinnerOrder3LotMultiplier;
+         if (g_orderCount == 1) volume = NormalizeDouble(baseVolume * WinnerOrder2LotMultiplier, _Digits);
+         else if (g_orderCount == 2) volume = NormalizeDouble(baseVolume * WinnerOrder3LotMultiplier, _Digits);
       } else if (g_scalingDirection == -1) {  // Scaling into losers
-         if (g_orderCount == 1) volume = baseVolume * LoserOrder2LotMultiplier;
-         else if (g_orderCount == 2) volume = baseVolume * LoserOrder3LotMultiplier;
+         if (g_orderCount == 1) volume = NormalizeDouble(baseVolume * LoserOrder2LotMultiplier, _Digits);
+         else if (g_orderCount == 2) volume = NormalizeDouble(baseVolume * LoserOrder3LotMultiplier, _Digits);
       }
    }
 
