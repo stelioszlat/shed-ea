@@ -254,11 +254,11 @@ bool TriggerSellOrder(double channelWidth, double channel20Width, double riskPer
    // Apply lot multiplier based on order sequence
    if (g_orderCount > 0) {
       if (g_scalingDirection == 1) {  // Scaling into winners
-         if (g_orderCount == 1) volume = NormalizeDouble(baseVolume * WinnerOrder2LotMultiplier, _Digits);
-         else if (g_orderCount == 2) volume = NormalizeDouble(baseVolume * WinnerOrder3LotMultiplier, _Digits);
+         if (g_orderCount == 1) volume = NormalizeVolume(_Symbol, baseVolume * WinnerOrder2LotMultiplier);
+         else if (g_orderCount == 2) volume = NormalizeVolume(_Symbol, baseVolume * WinnerOrder3LotMultiplier);
       } else if (g_scalingDirection == -1) {  // Scaling into losers
-         if (g_orderCount == 1) volume = NormalizeDouble(baseVolume * LoserOrder2LotMultiplier, _Digits);
-         else if (g_orderCount == 2) volume = NormalizeDouble(baseVolume * LoserOrder3LotMultiplier, _Digits);
+         if (g_orderCount == 1) volume = NormalizeVolume(_Symbol, baseVolume * LoserOrder2LotMultiplier);
+         else if (g_orderCount == 2) volume = NormalizeVolume(_Symbol, baseVolume * LoserOrder3LotMultiplier);
       }
    }
 
@@ -315,11 +315,11 @@ bool TriggerBuyOrder(double channelWidth, double channel20Width, double riskPerc
    // Apply lot multiplier based on order sequence
    if (g_orderCount > 0) {
       if (g_scalingDirection == 1) {  // Scaling into winners
-         if (g_orderCount == 1) volume = NormalizeDouble(baseVolume * WinnerOrder2LotMultiplier, _Digits);
-         else if (g_orderCount == 2) volume = NormalizeDouble(baseVolume * WinnerOrder3LotMultiplier, _Digits);
+         if (g_orderCount == 1) volume = NormalizeVolume(_Symbol, baseVolume * WinnerOrder2LotMultiplier);
+         else if (g_orderCount == 2) volume = NormalizeVolume(_Symbol, baseVolume * WinnerOrder3LotMultiplier);
       } else if (g_scalingDirection == -1) {  // Scaling into losers
-         if (g_orderCount == 1) volume = NormalizeDouble(baseVolume * LoserOrder2LotMultiplier, _Digits);
-         else if (g_orderCount == 2) volume = NormalizeDouble(baseVolume * LoserOrder3LotMultiplier, _Digits);
+         if (g_orderCount == 1) volume = NormalizeVolume(_Symbol, baseVolume * LoserOrder2LotMultiplier);
+         else if (g_orderCount == 2) volume = NormalizeVolume(_Symbol, baseVolume * LoserOrder3LotMultiplier);
       }
    }
 
@@ -367,11 +367,46 @@ bool ModifyStopLoss(ulong ticket, double TS) {
       return false;
    }
    
+   ENUM_POSITION_TYPE posType = (ENUM_POSITION_TYPE)PositionGetInteger(POSITION_TYPE);
    double current_price = PositionGetDouble(POSITION_PRICE_OPEN);
+   double current_sl = PositionGetDouble(POSITION_SL);
    double current_tp = PositionGetDouble(POSITION_TP);
    string symbol = PositionGetString(POSITION_SYMBOL);
    
+   double point = SymbolInfoDouble(symbol, SYMBOL_POINT);
+   long stopsLevel = SymbolInfoInteger(symbol, SYMBOL_TRADE_STOPS_LEVEL);
+   double minDistance = stopsLevel * point;
+   
+   double bid = SymbolInfoDouble(symbol, SYMBOL_BID);
+   double ask = SymbolInfoDouble(symbol, SYMBOL_ASK);
+   
    TS = NormalizeDouble(TS, _Digits);
+   
+   if (posType == POSITION_TYPE_BUY) {
+      if (TS >= bid) {
+         Print("[ERROR] BUY Stop Loss ", TS, " must be below Bid ", bid);
+         return false;
+      }
+      if (bid - TS < minDistance) {
+         Print("[ERROR] BUY Stop Loss too close to market. Distance: ", (bid - TS)/point, " pts, Required: ", stopsLevel, " pts");
+         return false;
+      }
+      if (current_sl > 0 && TS <= current_sl) {
+         return false;
+      }
+   } else {
+      if (TS <= ask) {
+         Print("[ERROR] SELL Stop Loss ", TS, " must be above Ask ", ask);
+         return false;
+      }
+      if (TS - ask < minDistance) {
+         Print("[ERROR] SELL Stop Loss too close to market. Distance: ", (TS - ask)/point, " pts, Required: ", stopsLevel, " pts");
+         return false;
+      }
+      if (current_sl > 0 && TS >= current_sl) {
+         return false;
+      }
+   }
    
    MqlTradeRequest request = {};
    MqlTradeResult result = {};
