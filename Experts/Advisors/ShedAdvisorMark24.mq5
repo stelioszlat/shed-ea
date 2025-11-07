@@ -34,10 +34,10 @@ input double ATRMultiplier = 1.0;       // ATR Multiplier
 input ENUM_APPLIED_PRICE AppliedPrice = PRICE_CLOSE; // Price type for indicator
 input string TradingSessionJapanStart  = "01:30";
 input string TradingSessionJapanEnd    = "06:00";
-input string TradingSessionEuropeStart = "08:30";
+input string TradingSessionEuropeStart = "06:00";
 input string TradingSessionEuropeEnd   = "13:00";
-input string TradingSessionUSAStart    = "16:30";
-input string TradingSessionUSAEnd      = "20:00";
+input string TradingSessionUSAStart    = "13:00";
+input string TradingSessionUSAEnd      = "23:00";
 
 input int    lookback = 5;
 input int    TimerIntervalSeconds = 180;
