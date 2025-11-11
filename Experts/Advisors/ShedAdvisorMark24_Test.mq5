@@ -59,22 +59,22 @@ input double BreakoutRetracementLow = 10.0;
 input double OrderCloseToRetracementPercent = 30.0;
 input ATRSelect ATRUsedInStopLossCalculation = ATRAlwaysWider;
 input string OutOfSessionCloseTime = "23:00";
-input OffSessionHandling HandleOrdersOutOfSession = OffSessionCloseOrder;
-input bool    UseADXFilter = true;                    // Enable ADX Trend Filter
-input int      ADXPeriod = 14;                        // ADX Period
+input OffSessionHandling HandleOrdersOutOfSession = OffSessionBreakEven;
+//input bool    UseADXFilter = true;                    // Enable ADX Trend Filter
+//input int      ADXPeriod = 14;                        // ADX Period
 
 // ===== Spread and Volatility Filtering =====
-input bool    UseSpreadFilter = true;                                        // Enable Spread Filter
-input double NormalSpreadPips = 0.8;                                          // Baseline Normal Spread (pips)
-input double MaxSpreadForEntry = 2.0;                                        // Max Spread to Allow Entry (pips)
-input bool    UseATRVolatilityAdjustment = true;                    // Adjust spread limits by ATR width
-input double SpreadToATRRatio = 0.15;                                        // Allow wider spread if ATR ratio exceeds this (15%)
-input double ExtremeSpreadMultiplier = 4.0;                            // Pause stop modifications at 4x normal spread
+//input bool    UseSpreadFilter = true;                                        // Enable Spread Filter
+//input double NormalSpreadPips = 0.8;                                          // Baseline Normal Spread (pips)
+//input double MaxSpreadForEntry = 2.0;                                        // Max Spread to Allow Entry (pips)
+//input bool    UseATRVolatilityAdjustment = true;                    // Adjust spread limits by ATR width
+//input double SpreadToATRRatio = 0.15;                                        // Allow wider spread if ATR ratio exceeds this (15%)
+//input double ExtremeSpreadMultiplier = 4.0;                            // Pause stop modifications at 4x normal spread
 
-input bool    UseMinimumVolatilityFilter = true;                    // Block trades in narrow markets
-input double MinimumATRChannelWidthPips = 15.0;                    // Minimum channel width in pips
-input double ATRRatioThresholdForWideSpread = 1.5;              // ATR112/ATR20 ratio to allow wider spreadsinput bool       
-input bool    UseDailyLimits = true;                                            // Enable daily profit/loss limits
+//input bool    UseMinimumVolatilityFilter = true;                    // Block trades in narrow markets
+//input double MinimumATRChannelWidthPips = 15.0;                    // Minimum channel width in pips
+//input double ATRRatioThresholdForWideSpread = 1.5;              // ATR112/ATR20 ratio to allow wider spreadsinput bool       
+//input bool    UseDailyLimits = true;                                            // Enable daily profit/loss limits
 // ===== Multi-Order Scaling System =====
 input bool    EnableMultiOrderScaling = false;                    // Master switch for all scaling features
 
@@ -101,8 +101,8 @@ input double MinStopProtectionPips = 2.0;                            // Minimum 
 // --- Safety Limits ---
 input int      MaxTotalOpenOrders = 8;                                      // Absolute max orders open at once (1-20)
 input bool    AllowMixedScaling = false;                                // Allow mixing loser + winner scaling in same sequence
-input double MaxDailyProfitPercent = 5.0;
-input double MaxDailyLossPercent = 2.0;
+//input double MaxDailyProfitPercent = 5.0;
+//input double MaxDailyLossPercent = 2.0;
 
 datetime g_lastResetDate = 0;
 double g_dailyStartBalance = 0.0;
@@ -357,9 +357,9 @@ bool TriggerBuyOrder(double channelWidth, double channel20Width, double riskPerc
 }
 
 bool ModifyStopLoss(ulong ticket, double TS)  {
-      if  (IsExtremeSpread())  {
+      /*if  (IsExtremeSpread())  {
             return false;
-      }
+      }*/
       
       if  (!PositionSelectByTicket(ticket))  {
             return false;
@@ -420,7 +420,7 @@ void checkTradeConditions()  {
          canTrade = !SelectPositionByMagic(_Symbol);
       }
       
-      if(IsWithinSession() && canTrade && IsTrendingMarket() && 
+      if(IsWithinSession() && canTrade && /*IsTrendingMarket() &&*/ 
          retracementPercent >= BreakoutRetracementLow && retracementPercent <= BreakoutRetracementHigh && 
          orderPlacementToRetracement >= OrderCloseToRetracementPercent)  {
          if(TriggerBuyOrder(channelWidth, channel20Width))  {
@@ -452,7 +452,7 @@ void checkTradeConditions()  {
          canTrade = !SelectPositionByMagic(_Symbol);
       }
       
-      if(IsWithinSession() && canTrade && IsTrendingMarket() && 
+      if(IsWithinSession() && canTrade && /*IsTrendingMarket() && */ 
          retracementPercent >= BreakoutRetracementLow && retracementPercent <= BreakoutRetracementHigh && 
          orderPlacementToRetracement >= OrderCloseToRetracementPercent)  {
          if(TriggerSellOrder(channelWidth, channel20Width))  {
@@ -619,7 +619,7 @@ bool IsWithinSession()  {
 }
 
 bool IsTrendingMarket()  {
-      if  (!UseADXFilter) return true;
+      //if  (!UseADXFilter) return true;
       
       double adxBuffer[];
       ArraySetAsSeries(adxBuffer, true);
@@ -637,8 +637,8 @@ bool IsTrendingMarket()  {
       return false;
 }
 
-bool IsSpreadAcceptable()  {
-      if  (!UseSpreadFilter) return true;
+/*bool IsSpreadAcceptable()  {
+      //if  (!UseSpreadFilter) return true;
       
       long spreadPoints = SymbolInfoInteger(_Symbol, SYMBOL_SPREAD);
       double point = SymbolInfoDouble(_Symbol, SYMBOL_POINT);
@@ -658,9 +658,9 @@ bool IsSpreadAcceptable()  {
       }
       
       return false;
-}
+}*/
 
-bool IsExtremeSpread()  {
+/*bool IsExtremeSpread()  {
       long spreadPoints = SymbolInfoInteger(_Symbol, SYMBOL_SPREAD);
       double point = SymbolInfoDouble(_Symbol, SYMBOL_POINT);
       double currentSpreadPips = spreadPoints * point / GetPipSize();
@@ -675,18 +675,18 @@ bool IsExtremeSpread()  {
       }
       
       return isExtreme;
-}
+}*/
 
-bool IsChannelWidthSufficient()  {
+/*bool IsChannelWidthSufficient()  {
       if  (!UseMinimumVolatilityFilter) return true;
       
       double channelWidth = g_cachedUpper112 - g_cachedLower112;
       double channelWidthPips = channelWidth / GetPipSize();
       
       return (channelWidthPips >= MinimumATRChannelWidthPips);
-}
+}*/
 
-void CheckDailyLimits()  {
+/*void CheckDailyLimits()  {
       if  (!UseDailyLimits) return;
       
       MqlDateTime dtStruct;
@@ -713,7 +713,7 @@ void CheckDailyLimits()  {
             g_dailyLimitReached = true;
             CloseAllOrders();
       }
-}
+}*/
 
 double NormalizeVolume(string symbol, double volume)  {
       double minVol = SymbolInfoDouble(symbol, SYMBOL_VOLUME_MIN);
@@ -1111,12 +1111,12 @@ int OnInit()  {
             return INIT_FAILED;
       }
       
-      if  (UseADXFilter)  {
+      /*if  (UseADXFilter)  {
             adxHandle = iADX(_Symbol, _Period, ADXPeriod);
             if  (adxHandle == INVALID_HANDLE)  {
                   return INIT_FAILED;
             }
-      }
+      }*/
       
       EventSetMillisecondTimer(100);
       
@@ -1133,6 +1133,6 @@ void OnDeinit(const int reason)  {
       EventKillTimer();
 }
 
-void OnTimer()  {
+/*void OnTimer()  {
       CheckDailyLimits();
-}
+}*/
